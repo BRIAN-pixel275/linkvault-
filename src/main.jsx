@@ -27,19 +27,37 @@ function App() {
   }, [])
   const countdown = useAutoLock(wipe, Boolean(session && aal2 && keyRef.current))
 
-  const inspect = useCallback(async (activeSession) => {
+ const runId = useRef(0)
+
+const inspect = useCallback(async (activeSession) => {
+  const myRun = ++runId.current
+  const stale = () => myRun !== runId.current
+  try {
     setSession(activeSession)
-    if (!activeSession) { setAal2(false); setSettings(null); setSettingsError(''); setReady(true); wipe(); return }
+    if (!activeSession) {
+      setAal2(false); setSettings(null); setSettingsError(''); wipe()
+      return
+    }
     const { data: assurance } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+    if (stale()) return
     const isAal2 = assurance?.currentLevel === 'aal2'
     setAal2(isAal2)
-    if (!isAal2) { setReady(true); wipe(); return }
-    const { data, error } = await supabase.from('vault_settings').select('kdf_salt,wrapped_key,wrapped_key_iv').maybeSingle()
+    if (!isAal2) { wipe(); return }
+
+    const { data, error } = await supabase
+      .from('vault_settings')
+      .select('kdf_salt,wrapped_key,wrapped_key_iv')
+      .maybeSingle()
+    if (stale()) return
     if (error) { setSettings(null); setNeedsSetup(false); setSettingsError(error.message) }
     else if (!data) { setSettingsError(''); setNeedsSetup(true) }
     else { setSettings(data); setSettingsError(''); setNeedsSetup(false) }
-    setReady(true)
-  }, [wipe])
+  } catch (err) {
+    if (!stale()) setSettingsError(err?.message || 'Could not reach the vault.')
+  } finally {
+    if (!stale()) setReady(true)
+  }
+}, [wipe])
 
   useEffect(() => {
     let alive = true
