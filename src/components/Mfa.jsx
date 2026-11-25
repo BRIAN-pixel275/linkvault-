@@ -7,11 +7,13 @@ export default function Mfa({ onDone }) {
   const [secret, setSecret] = useState('')
   const [code, setCode] = useState('')
   const [error, setError] = useState('')
+  const [isNewFactor, setIsNewFactor] = useState(false)
+  const [busy, setBusy] = useState(false)
 
   useEffect(() => {
     async function init() {
       const { data: factors } = await supabase.auth.mfa.listFactors()
-      const verified = factors?.totp?.[0]
+      const verified = factors?.totp?.find((factor) => factor.status === 'verified')
       if (verified) {
         // Already set up: just ask for the code
         setFactorId(verified.id)
@@ -26,47 +28,41 @@ export default function Mfa({ onDone }) {
       setFactorId(data.id)
       setQr(data.totp.qr_code)
       setSecret(data.totp.secret)
+      setIsNewFactor(true)
     }
     init()
   }, [])
 
-  async function handleVerify() {
-    setError('')
-    const { data: challenge, error: cErr } = await supabase.auth.mfa.challenge({ factorId })
-    if (cErr) return setError(cErr.message)
-    const { error: vErr } = await supabase.auth.mfa.verify({
-      factorId,
-      challengeId: challenge.id,
-      code,
-    })
-    if (vErr) return setError(vErr.message)
-    onDone()
+  async function handleVerify(event) {
+    event.preventDefault(); setError(''); setBusy(true)
+    try {
+      if (isNewFactor) {
+        const { error: verifyError } = await supabase.auth.mfa.challengeAndVerify({ factorId, code })
+        if (verifyError) throw verifyError
+      } else {
+        const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({ factorId })
+        if (challengeError) throw challengeError
+        const { error: verifyError } = await supabase.auth.mfa.verify({ factorId, challengeId: challenge.id, code })
+        if (verifyError) throw verifyError
+      }
+      onDone()
+    } catch (err) { setError(err.message || 'Could not verify this code.') }
+    finally { setBusy(false) }
   }
 
   return (
-    <div style={{ maxWidth: 360, margin: '10vh auto', padding: 16 }}>
-      <h2>Two-factor check</h2>
+    <section className="auth-panel mfa-panel">
+      <div className="eyebrow">TWO-FACTOR AUTHENTICATION</div><h1>Verify it’s you.</h1>
+      <p className="muted">{isNewFactor ? 'Scan with an authenticator app, then enter its current code.' : 'Enter the current code from your authenticator app.'}</p>
       {qr && (
-        <>
-          <p>Scan this with Google Authenticator, Authy or similar:</p>
-          <img src={qr} alt="2FA QR code" style={{ width: 200 }} />
-          <p style={{ fontSize: 12 }}>Or enter manually: {secret}</p>
-        </>
+        <div className="totp-setup"><img src={qr} alt="Scan this QR code to add Link Vault to your authenticator app" /><p>Or enter this setup key manually</p><code>{secret}</code></div>
       )}
-      <input
-        placeholder="6-digit code"
-        value={code}
-        onChange={(e) => setCode(e.target.value)}
-        maxLength={6}
-        style={{ width: '100%', marginBottom: 8, padding: 10 }}
-      />
-      <button onClick={handleVerify} style={{ width: '100%', padding: 10 }}>
-        Verify
-      </button>
-      <button onClick={() => supabase.auth.signOut()} style={{ width: '100%', padding: 10, marginTop: 8 }}>
-        Cancel
-      </button>
-      {error && <p style={{ color: 'crimson' }}>{error}</p>}
-    </div>
+      <form className="stack" onSubmit={handleVerify}>
+        <label>6-digit code<input inputMode="numeric" autoComplete="one-time-code" maxLength={6} pattern="[0-9]{6}" value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} required /></label>
+        {error && <p className="error">{error}</p>}
+        <button className="primary" disabled={busy || !factorId}>{busy ? 'Verifying…' : isNewFactor ? 'Verify and enable MFA' : 'Verify and continue'}</button>
+        <button type="button" className="quiet" onClick={() => supabase.auth.signOut()}>Sign out</button>
+      </form>
+    </section>
   )
 }

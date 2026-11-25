@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { createRecoveryKey, createSalt, deriveKey, wrapKey } from '../crypto'
+import { createKeyCheck, createRecoveryKey, createSalt, deriveKey, wrapKey } from '../crypto'
 import { supabase } from '../supabase'
 
 export default function Setup({ userId, onComplete }) {
@@ -16,11 +16,13 @@ export default function Setup({ userId, onComplete }) {
     try {
       const salt = createSalt()
       const key = await deriveKey(passphrase, salt)
+      const check = await createKeyCheck(key)
       const recoveryKey = createRecoveryKey()
       const wrapped = await wrapKey(key, recoveryKey)
-      const { error: saveError } = await supabase.from('vault_settings').insert({ user_id: userId, kdf_salt: salt, ...wrapped })
+      const savedSettings = { kdf_salt: salt, ...wrapped, key_check: check.payload, key_check_iv: check.iv }
+      const { error: saveError } = await supabase.from('vault_settings').insert({ user_id: userId, ...savedSettings })
       if (saveError) throw saveError
-      setPassphrase(''); setConfirm(''); setRecovery(recoveryKey); onComplete(key, recoveryKey)
+      setPassphrase(''); setConfirm(''); setRecovery(recoveryKey); onComplete(key, recoveryKey, savedSettings)
     } catch (err) { setError(err.message || 'Setup could not be completed.') }
     finally { setBusy(false) }
   }

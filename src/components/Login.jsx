@@ -5,37 +5,19 @@ export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [busy, setBusy] = useState(false)
 
-  async function handleLogin() {
-    setLoading(true)
-    setError('')
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) setError(error.message)
-    setLoading(false)
+  async function submit(event) {
+    event.preventDefault(); setError(''); setBusy(true)
+    const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
+    if (authError) setError(authError.message)
+    setBusy(false)
   }
 
-  return (
-    <div style={{ maxWidth: 360, margin: '15vh auto', padding: 16 }}>
-      <h2>Link Vault</h2>
-      <input
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        style={{ width: '100%', marginBottom: 8, padding: 10 }}
-      />
-      <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        style={{ width: '100%', marginBottom: 8, padding: 10 }}
-      />
-      <button onClick={handleLogin} disabled={loading} style={{ width: '100%', padding: 10 }}>
-        {loading ? 'Signing in...' : 'Sign in'}
-      </button>
-      {error && <p style={{ color: 'crimson' }}>{error}</p>}
-    </div>
-  )
+  return <main className="auth-shell"><section className="auth-panel"><div className="eyebrow">PRIVATE LINK STORAGE</div><h1>Welcome back.</h1><p className="muted">Sign in to continue to your encrypted vault.</p>
+    <form onSubmit={submit} className="stack"><label>Email<input type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} required /></label>
+      <label>Password<input type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required /></label>
+      {error && <p className="error" role="alert">{error}</p>}<button className="primary" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button>
+      <p className="login-footnote">This vault is private. Only the owner account can sign in.</p>
+    </form></section></main>
 }

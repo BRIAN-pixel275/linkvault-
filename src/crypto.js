@@ -1,6 +1,7 @@
 const encoder = new TextEncoder()
 const decoder = new TextDecoder()
 const ITERATIONS = 600_000
+const KEY_CHECK = { purpose: 'link-vault-key-check', version: 1 }
 
 function toBase64(bytes) {
   let binary = ''
@@ -66,4 +67,13 @@ export async function unwrapKey(wrappedKey, iv, recoveryKey) {
   const wrappingKey = await recoveryCryptoKey(recoveryKey)
   const raw = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: fromBase64(iv) }, wrappingKey, fromBase64(wrappedKey))
   return crypto.subtle.importKey('raw', raw, { name: 'AES-GCM' }, true, ['encrypt', 'decrypt'])
+}
+
+export async function createKeyCheck(key) {
+  return encrypt(KEY_CHECK, key)
+}
+
+export async function verifyKeyCheck(payload, iv, key) {
+  const marker = await decrypt(payload, iv, key)
+  return marker?.purpose === KEY_CHECK.purpose && marker?.version === KEY_CHECK.version
 }
