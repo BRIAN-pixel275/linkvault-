@@ -10,7 +10,7 @@ const walls = [
 
 export default function ArtworkGallery({ items, onOpen, onEdit, onDelete, onCopy }) {
   const [yaw, setYaw] = useState(0)
-  const [zoom, setZoom] = useState(2)
+  const [zoom, setZoom] = useState(() => window.matchMedia('(max-width: 680px)').matches ? 4 : 2)
   const drag = useRef(null)
   const suppressClickUntil = useRef(0)
 
