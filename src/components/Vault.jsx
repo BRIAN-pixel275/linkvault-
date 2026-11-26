@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { decrypt, encrypt } from '../crypto'
 import { supabase } from '../supabase'
-import LinkCard from './LinkCard'
+import ArtworkGallery from './ArtworkGallery'
+import ArtworkModal from './ArtworkModal'
 import LinkForm, { providerFor } from './LinkForm'
 
 export default function Vault({ userId, email, settings, keyRef, onLock, onSignOut, countdown }) {
@@ -15,6 +16,7 @@ export default function Vault({ userId, email, settings, keyRef, onLock, onSignO
   const [sort, setSort] = useState('newest')
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [checkStatus, setCheckStatus] = useState('')
+  const [viewing, setViewing] = useState(null)
 
   function notify(message) {
     setToast(message)
@@ -88,7 +90,8 @@ export default function Vault({ userId, email, settings, keyRef, onLock, onSignO
     {(adding || editing) && <div className="modal-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) { setAdding(false); setEditing(null) } }}><LinkForm initial={editing} onSave={saveLink} onCancel={() => { setAdding(false); setEditing(null) }} /></div>}
     {error && <p className="error notice">{error}</p>}
     <section className="controls"><label className="searchbox"><span>⌕</span><input aria-label="Search links" placeholder="Search your vault" value={query} onChange={(e) => setQuery(e.target.value)} /></label><label className="filterbox"><span>Tag</span><select value={tagFilter} onChange={(e) => setTagFilter(e.target.value)}><option value="">All tags</option>{tags.map((tag) => <option key={tag}>{tag}</option>)}</select></label><label className="filterbox"><span>Sort</span><select aria-label="Sort links" value={sort} onChange={(e) => setSort(e.target.value)}><option value="newest">Newest</option><option value="oldest">Oldest</option><option value="title">Title A–Z</option><option value="provider">Provider</option></select></label><span className="result-count">{filtered.length} {filtered.length === 1 ? 'link' : 'links'}</span></section>
-    {filtered.length ? <section className="link-grid">{filtered.map((item) => <LinkCard key={item.id} item={item} onEdit={() => { setAdding(false); setEditing(item) }} onDelete={() => remove(item)} onCopy={() => copy(item)} />)}</section> : <section className="empty-state"><div className="empty-mark">⌑</div><h2>{links.length ? 'Nothing matches your search.' : 'Your vault is ready.'}</h2><p className="muted">{links.length ? 'Try another search or clear the tag filter.' : 'Save the first link you want to keep close.'}</p>{!links.length && <button className="secondary" onClick={() => setAdding(true)}>Add your first link</button>}</section>}
+    {filtered.length ? <ArtworkGallery items={filtered} onOpen={setViewing} onEdit={(item) => { setAdding(false); setEditing(item) }} onDelete={remove} onCopy={copy} /> : <section className="empty-state"><div className="empty-mark">⌑</div><h2>{links.length ? 'Nothing matches your search.' : 'Your gallery is ready.'}</h2><p className="muted">{links.length ? 'Try another search or clear the tag filter.' : 'Save the first link you want to hang in your gallery.'}</p>{!links.length && <button className="secondary" onClick={() => setAdding(true)}>Add your first link</button>}</section>}
+    <ArtworkModal item={viewing} onClose={() => setViewing(null)} />
     {settingsOpen && <SettingsPanel email={email} settings={settings} onClose={() => setSettingsOpen(false)} onSignOut={onSignOut} onRunCheck={runHealthCheck} checkStatus={checkStatus} />}
     <div className="toast" aria-live="polite" aria-atomic="true">{toast}</div>
     <footer className="vault-footer"><span>Encrypted in this browser before syncing.</span><span>Google continues to host your files.</span></footer></main>
