@@ -2,7 +2,7 @@ function directImage(url = '') {
   try {
     const host = new URL(url).hostname.toLowerCase()
     const googleHost = host === 'googleusercontent.com' || host.endsWith('.googleusercontent.com')
-    return googleHost && /\.(avif|gif|jpe?g|png|webp)(?:$|[?#])/i.test(url)
+    return googleHost
   } catch { return false }
 }
 
