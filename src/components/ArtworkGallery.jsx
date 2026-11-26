@@ -10,12 +10,16 @@ const walls = [
 
 export default function ArtworkGallery({ items, onOpen, onEdit, onDelete, onCopy }) {
   const [yaw, setYaw] = useState(0)
-  const [walking, setWalking] = useState(true)
+  const [zoom, setZoom] = useState(2)
   const drag = useRef(null)
   const suppressClickUntil = useRef(0)
 
   function turn(steps) {
     setYaw((current) => (current + steps + 72) % 72)
+  }
+
+  function zoomBy(steps) {
+    setZoom((current) => Math.max(0, Math.min(6, current + steps)))
   }
 
   function onPointerDown(event) {
@@ -47,13 +51,15 @@ export default function ArtworkGallery({ items, onOpen, onEdit, onDelete, onCopy
   function onKeyDown(event) {
     if (event.key === 'ArrowLeft') { event.preventDefault(); turn(3) }
     if (event.key === 'ArrowRight') { event.preventDefault(); turn(-3) }
+    if (event.key === '+' || event.key === '=') { event.preventDefault(); zoomBy(1) }
+    if (event.key === '-') { event.preventDefault(); zoomBy(-1) }
   }
 
   const itemsByWall = walls.map(() => [])
   items.forEach((item, index) => itemsByWall[index % walls.length].push({ item, index }))
 
-  return <section className={`museum-viewport museum-yaw-${yaw}`} aria-label="Interactive Nairobi heritage museum gallery" tabIndex={0} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={endDrag} onPointerCancel={endDrag} onPointerLeave={endDrag} onClickCapture={onClickCapture} onKeyDown={onKeyDown}>
-    <div className="museum-heading"><div><span className="eyebrow">LINK VAULT · MUSEUM WALK</span><span className="museum-subtitle">A quiet gallery for the things you keep.</span></div><div className="museum-actions"><button className="museum-turn" onClick={() => turn(3)} aria-label="Turn left 15 degrees">←</button><span className="museum-turn-label">360° view</span><button className="museum-turn" onClick={() => turn(-3)} aria-label="Turn right 15 degrees">→</button><button className="quiet museum-walk-toggle" onClick={() => setWalking((value) => !value)}>{walking ? 'Pause walk' : 'Resume walk'}</button></div></div>
+  return <section className={`museum-viewport museum-yaw-${yaw} museum-zoom-${zoom}`} aria-label="Interactive Nairobi heritage museum gallery" tabIndex={0} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={endDrag} onPointerCancel={endDrag} onPointerLeave={endDrag} onClickCapture={onClickCapture} onKeyDown={onKeyDown}>
+    <div className="museum-heading"><div><span className="eyebrow">LINK VAULT · MUSEUM VIEW</span><span className="museum-subtitle">A quiet gallery for the things you keep.</span></div><div className="museum-actions"><button className="museum-turn" onClick={() => turn(3)} aria-label="Turn left 15 degrees">←</button><span className="museum-turn-label">360°</span><button className="museum-turn" onClick={() => turn(-3)} aria-label="Turn right 15 degrees">→</button><span className="museum-control-divider" /><button className="museum-turn" onClick={() => zoomBy(-1)} aria-label="Zoom out" disabled={zoom === 0}>−</button><span className="museum-turn-label museum-zoom-label">{Math.round((0.8 + zoom * 0.1) * 100)}%</span><button className="museum-turn" onClick={() => zoomBy(1)} aria-label="Zoom in" disabled={zoom === 6}>＋</button></div></div>
     <div className="museum-world" aria-label="Museum room">
       <div className="museum-ceiling" aria-hidden="true" />
       <div className="museum-floor" aria-hidden="true" />
@@ -62,8 +68,7 @@ export default function ArtworkGallery({ items, onOpen, onEdit, onDelete, onCopy
           {itemsByWall[wallIndex].map(({ item, index }) => <LinkCard key={item.id} item={item} index={index} onOpen={() => onOpen(item)} onEdit={() => onEdit(item)} onDelete={() => onDelete(item)} onCopy={() => onCopy(item)} />)}
         </div>
       </div>)}
-      <div className={`museum-walker${walking ? '' : ' is-paused'}`} aria-hidden="true"><i className="museum-person-head" /><i className="museum-person-body" /><i className="museum-person-arm arm-left" /><i className="museum-person-arm arm-right" /><i className="museum-person-leg leg-left" /><i className="museum-person-leg leg-right" /></div>
     </div>
-    <div className="museum-hint"><span className="drag-indicator" aria-hidden="true">↔</span> Drag to look around · use ← → keys · links stay on the walls</div>
+    <div className="museum-hint"><span className="drag-indicator" aria-hidden="true">↔</span> Drag to look · ← → rotate · +/− zoom</div>
   </section>
 }
