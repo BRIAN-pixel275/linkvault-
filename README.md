@@ -7,6 +7,8 @@ A private, single-user link organizer for Google Photos, Google Drive, and other
 - Saved links appear as framed artworks inside a Nairobi heritage-inspired 3D room. The room uses CSS 3D transforms and requires no WebGL or graphics dependencies.
 - Drag horizontally to look around the room, or focus the gallery and use the left/right arrow keys. On-screen arrows turn by 15 degrees.
 - Use the `−` and `+` controls or keyboard `-` and `+` to zoom from 80% to 140%. Mobile screens start at 120% zoom and use a compact room layout.
+- Use the home control to return to the entrance view. Dragging the room does not intercept clicks on artwork or room controls.
+- Search and tag filters run on decrypted client-side data; use **Clear filters** to restore the full collection.
 - Selecting a frame opens its artwork view. Direct Google-hosted images and eligible Google Drive files are previewed when available; **Open original** always links to the saved URL. Google Photos sharing pages may require opening the original.
 - Card artwork is decorative app content, not a preview or copy of the user's file. Local image sources and licenses are listed in [`ARTWORK_CREDITS.md`](ARTWORK_CREDITS.md).
 

@@ -11,13 +11,19 @@ export function useAutoLock(onLock, enabled) {
 
   useEffect(() => {
     if (!enabled) return undefined
+    // Start a fresh idle window when the user unlocks the vault. Time spent
+    // on the login or unlock screen should not lock it immediately afterward.
+    lastActivity.current = Date.now()
+    hiddenAt.current = document.hidden ? Date.now() : null
+    setRemaining(TIMEOUT_MS)
+    let didLock = false
     const activity = () => { lastActivity.current = Date.now() }
     const events = ['pointerdown', 'keydown', 'touchstart', 'mousemove']
     events.forEach((event) => window.addEventListener(event, activity, { passive: true }))
     const tick = window.setInterval(() => {
       const left = Math.max(0, TIMEOUT_MS - (Date.now() - lastActivity.current))
       setRemaining(left)
-      if (left === 0) callback.current()
+      if (left === 0 && !didLock) { didLock = true; callback.current() }
     }, 1000)
     const visibility = () => {
       if (document.hidden) hiddenAt.current = Date.now()

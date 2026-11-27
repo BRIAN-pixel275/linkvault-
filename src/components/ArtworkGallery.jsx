@@ -24,7 +24,9 @@ export default function ArtworkGallery({ items, onOpen, onEdit, onDelete, onCopy
 
   function onPointerDown(event) {
     if (event.button !== 0) return
+    if (event.target.closest('button, a, input, select, textarea')) return
     drag.current = { x: event.clientX, originX: event.clientX, carry: 0, moved: false }
+    event.currentTarget.setPointerCapture?.(event.pointerId)
   }
 
   function onPointerMove(event) {
@@ -59,7 +61,7 @@ export default function ArtworkGallery({ items, onOpen, onEdit, onDelete, onCopy
   items.forEach((item, index) => itemsByWall[index % walls.length].push({ item, index }))
 
   return <section className={`museum-viewport museum-yaw-${yaw} museum-zoom-${zoom}`} aria-label="Interactive Nairobi heritage museum gallery" tabIndex={0} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={endDrag} onPointerCancel={endDrag} onPointerLeave={endDrag} onClickCapture={onClickCapture} onKeyDown={onKeyDown}>
-    <div className="museum-heading"><div><span className="eyebrow">LINK VAULT · MUSEUM VIEW</span><span className="museum-subtitle">A quiet gallery for the things you keep.</span></div><div className="museum-actions"><button className="museum-turn" onClick={() => turn(3)} aria-label="Turn left 15 degrees">←</button><span className="museum-turn-label">360°</span><button className="museum-turn" onClick={() => turn(-3)} aria-label="Turn right 15 degrees">→</button><span className="museum-control-divider" /><button className="museum-turn" onClick={() => zoomBy(-1)} aria-label="Zoom out" disabled={zoom === 0}>−</button><span className="museum-turn-label museum-zoom-label">{Math.round((0.8 + zoom * 0.1) * 100)}%</span><button className="museum-turn" onClick={() => zoomBy(1)} aria-label="Zoom in" disabled={zoom === 6}>＋</button></div></div>
+    <div className="museum-heading"><div><span className="eyebrow">LINK VAULT · MUSEUM VIEW</span><span className="museum-subtitle">A quiet gallery for the things you keep.</span></div><div className="museum-actions"><button className="museum-turn" onClick={() => turn(3)} aria-label="Turn left 15 degrees">←</button><span className="museum-turn-label">360°</span><button className="museum-turn" onClick={() => turn(-3)} aria-label="Turn right 15 degrees">→</button><button className="museum-turn museum-home" onClick={() => setYaw(0)} aria-label="Return to entrance view">⌂</button><span className="museum-control-divider" /><button className="museum-turn" onClick={() => zoomBy(-1)} aria-label="Zoom out" disabled={zoom === 0}>−</button><span className="museum-turn-label museum-zoom-label">{Math.round((0.8 + zoom * 0.1) * 100)}%</span><button className="museum-turn" onClick={() => zoomBy(1)} aria-label="Zoom in" disabled={zoom === 6}>＋</button></div></div>
     <div className="museum-world" aria-label="Museum room">
       <div className="museum-ceiling" aria-hidden="true" />
       <div className="museum-floor" aria-hidden="true" />
