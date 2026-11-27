@@ -2,6 +2,14 @@
 
 A private, single-user link organizer for Google Photos, Google Drive, and other URLs. It stores only encrypted link metadata; the referenced files remain hosted by Google.
 
+## Gallery experience
+
+- Saved links appear as framed artworks inside a Nairobi heritage-inspired 3D room. The room uses CSS 3D transforms and requires no WebGL or graphics dependencies.
+- Drag horizontally to look around the room, or focus the gallery and use the left/right arrow keys. On-screen arrows turn by 15 degrees.
+- Use the `−` and `+` controls or keyboard `-` and `+` to zoom from 80% to 140%. Mobile screens start at 120% zoom and use a compact room layout.
+- Selecting a frame opens its artwork view. Direct Google-hosted images and eligible Google Drive files are previewed when available; **Open original** always links to the saved URL. Google Photos sharing pages may require opening the original.
+- Card artwork is decorative app content, not a preview or copy of the user's file. Local image sources and licenses are listed in [`ARTWORK_CREDITS.md`](ARTWORK_CREDITS.md).
+
 ## Local setup
 
 1. Create a Supabase project and run [`supabase/schema.sql`](supabase/schema.sql) in its SQL Editor. If the original schema is already installed, run [`20261125_vault_security_updates.sql`](supabase/migrations/20261125_vault_security_updates.sql) before deploying this version.
@@ -10,6 +18,8 @@ A private, single-user link organizer for Google Photos, Google Drive, and other
 4. Run `npm install`, then `npm run dev`.
 
 To preview the interface without contacting Supabase or writing data, run `npm run dev -- --host 127.0.0.1` and open `http://127.0.0.1:5173/?preview=1`. This local demo uses sample links and simulates sign-in, key verification, recovery, and diagnostics. It is visibly marked as a preview and does not validate your live Supabase setup.
+
+Run `npm run build` to create the static production bundle in `dist/`.
 
 The app gates the vault on Supabase assurance level `aal2`. Users without an enrolled TOTP factor are sent through TOTP enrollment at first sign-in. Save the recovery key offline during vault setup.
 
